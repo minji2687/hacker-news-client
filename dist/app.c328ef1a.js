@@ -110,33 +110,55 @@ var container = document.getElementById("root");
 var content = document.createElement("div");
 var NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
 var CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
-ajax.open("GET", NEWS_URL, false);
-ajax.send();
-var newsFeed = JSON.parse(ajax.response);
-var ul = document.createElement("ul");
-window.addEventListener("hashchange", function () {
-  console.log(location.hash);
-  var id = location.hash.substr(1);
-  ajax.open("GET", CONTENT_URL.replace("@id", id), false);
-  ajax.send();
-  var newsContent = JSON.parse(ajax.response);
-  var title = document.createElement("h1");
-  title.innerHTML = newsContent.title;
-  content.appendChild(title);
-  console.log(newsContent);
-});
+var store = {
+  currentPage: 1
+};
 
-for (var i = 0; i < 10; i++) {
-  var li = document.createElement("li");
-  var a = document.createElement("a");
-  a.href = "#".concat(newsFeed[i].id);
-  a.innerHTML = "".concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")");
-  li.appendChild(a);
-  ul.appendChild(li);
+function getData(url) {
+  ajax.open("GET", url, false);
+  ajax.send();
+  return JSON.parse(ajax.response);
 }
 
-container.appendChild(ul);
-container.appendChild(content);
+function newsFeed() {
+  var newsFeed = getData(NEWS_URL);
+  var newsList = [];
+  var template = "\n  <div class=\"container m-auto p-4\">\n    <h1>Hacker News</h1>\n    <ul>\n      {{__news_feed__}}\n    </ul>\n    <div>\n      <a href=\"#/page/{{__prev_page__}}\">\uC774\uC804\uD398\uC774\uC9C0</a>\n      <a href=\"#/page/{{__next_page__}}\">\uB2E4\uC74C\uD398\uC774\uC9C0</a>\n    </div>\n  </div>\n  ";
+
+  for (var i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
+    newsList.push("\n    <li>\n        <a href=\"#/show/".concat(newsFeed[i].id, "\">\n          ").concat(newsFeed[i].title, "(").concat(newsFeed[i].comments_count, ")\n        </a>  \n    </li>\n    "));
+  }
+
+  template = template.replace("{{__news_feed__}}", newsList.join(""));
+  template = template.replace("{{__prev_page__}}", store.currentPage > 1 ? store.currentPage - 1 : 1);
+  template = template.replace("{{__next_page__}}", store.currentPage + 1);
+  container.innerHTML = template;
+}
+
+var ul = document.createElement("ul");
+
+function newsDetail() {
+  var id = location.hash.substr(7);
+  console.log(location.hash);
+  var newsContent = getData(CONTENT_URL.replace("@id", id));
+  container.innerHTML = "\n  <h1>".concat(newsContent.title, "</h1>\n  <div>\n    <a href=\"#/page/").concat(store.currentPage, "\">\uBAA9\uB85D\uC73C\uB85C</a>\n  </div>\n  ");
+}
+
+function router() {
+  var routePath = location.hash;
+
+  if (routePath === "") {
+    newsFeed();
+  } else if (routePath.indexOf("#/page/") >= 0) {
+    store.currentPage = Number(routePath.substr(7));
+    newsFeed();
+  } else {
+    newsDetail();
+  }
+}
+
+window.addEventListener("hashchange", router);
+router();
 },{}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -164,7 +186,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64202" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62972" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
